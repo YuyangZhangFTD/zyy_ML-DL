@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 # parameter
-n_sample = 1000
+n_sample = 100
 k = 2
 
 
@@ -22,10 +22,10 @@ c = [np.array([2, 2]),
      ]
 sigma = np.array([[1, 0], [0, 1]])
 data = np.zeros([n_sample, 2])
-cls = np.zeros([n_sample, 1])
+cls = np.ones([n_sample, 1])
 for ii in range(k):
     data[ii*cls_n:(ii+1)*cls_n] = np.dot(np.random.randn(cls_n, 2), sigma) + c[ii]
-    cls[ii*cls_n:(ii+1)*cls_n] = np.ones([cls_n, 1]) * int(ii/cls_n)
+    cls[ii*cls_n:(ii+1)*cls_n] *= ii
 
 # plot data
 color = ['b', 'y', 'g', 'r']
@@ -34,7 +34,7 @@ for ii in range(k):
 plt.show()
 
 # save data
-with open('Labeled_Data_2cls_1000.csv', 'w') as f:
+with open('Labeled_Data_2cls_100.csv', 'w') as f:
     f.write('x,y,label\n')
     for ii in range(n_sample):
         tmp = ','.join([str(x) for x in data[ii, :].tolist()]) + ','+str(int(cls[ii]))
