@@ -37,7 +37,7 @@ def selectFeatureSplit(para_x, para_y):
     # feature
     featureNum = para_x.shape[1]
     for i in range(featureNum):
-        
-    for c in classType:
-        
+        # TODO calculate gain of each feature
+        pass
+
     return None
