@@ -1,5 +1,6 @@
 import numpy as np
 
+# data
 data = np.array(
     [
         [0,0,0,1],
@@ -15,6 +16,9 @@ data = np.array(
 x = data[:,:3]
 y = data[:,3]
 
+
+
+# function
 def nodeEntropy(para_y):
     yList = para_y.tolist()
     classSet = set(yList)
@@ -25,31 +29,39 @@ def nodeEntropy(para_y):
     return -1*np.sum([pVector*np.log(pVector)], axis=1)
 
 
-def featureGain(para_x, para_y, para_feature_index, para_discrete=True):
-    yList = para_y.tolist()
-    classSet = set(yList)
-    classNum = len(classSet)
-    rootEntropy = nodeEntropy(para_y)
+def featureGain(para_data, para_rootEntropy, para_featureIndex, para_discrete=True):
+    x = para_data[:,:-1]
+    y = para_data[:,-1]
+    labelList = y.tolist()
+    LabelSet = set(labelList)
+    LabelNum = len(LabelSet)
     if para_discrete:
-        xList = para_x[para_feature_index,:].tolist()
-        xValueSet = set(xList)
-        xValueNum = len(xValueSet)
-        # x=0,1,2 y=0,1
-        # x_dict = {
-        #   0:{0:0, 1:0}
-        #   1:{0:0, 1:0}
-        #   2:{0:0, 1:0}
-        # }  
-        # think how to generate dict with counting at the same time
-        x_dict = zip(xValueSet, [zip(classSet, [0 for __ in range(classNum)]) for __ in range(xValueNum)])
-        for i in range(len(xList)):
-            pass
+        featureList = x[:,para_featureIndex].tolist()
+        featureSet = set(featureList)
+        featureNum = len(featureSet)
+        # record subset index
+        # feature {0,1} 
+        # countDic = {
+        #   0:[0,3,5]
+        #   1:[1,2,4]
+        # }
+        countDict = dict(zip(featureSet, [[] for __ in range(featureNum)]))
+        for i in range(len(featureList)):
+            countDict[featureList[i]].append(i)
     else:
         pass
-    return None
+
+    subsetDict = dict()
+    for k,v in countDict.items():
+        subsetDict[k] = np.array([para_data[i] for i in v])
+    sumEntropy = sum([
+        nodeEntropy(v[:,-1])*v.shape[0]/data.shape[0]
+        for v in subsetDict.values()
+    ])
+    return para_rootEntropy - sumEntropy
 
 
-def selectFeatureSplit(para_x, para_y):
+def selectFeatureSplit(para_x, para_y, splitFeatureList, splitFeatureDict):
     """
         Split with feature para_fea
         para_fea:   the index of feature
@@ -68,3 +80,30 @@ def selectFeatureSplit(para_x, para_y):
 
 
     return None
+
+
+# draft
+# def featureGain(para_x, para_y, para_rootEntropy, para_featureIndex, para_discrete=True)
+#     labelList = para_y.tolist()
+#     LabelSet = set(labelList)
+#     LabelNum = len(LabelSet)
+#     if para_discrete:
+#         featureList = para_x[:,para_featureIndex].tolist()
+#         featureSet = set(xList)
+#         featureNum = len(featureSet)
+#         # x=0,1,2 y=0,1
+#         # x_dict = {
+#         #   0:{0:0, 1:0}
+#         #   1:{0:0, 1:0}
+#         #   2:{0:0, 1:0}
+#         # }  
+#         # think how to generate dict with counting at the same time
+#         countDict = dict(zip(
+#                 featureSet, [
+#                     dict(zip(LabelSet, [ 0 for __ in range(LabelNum)]))
+#                     for __ in range(featureNum)
+#                 ]))
+#         for i in range(len(featureList)):
+#             countDict[featureList[i]][labelList[i]] += 1
+#     else:
+#         pass
