@@ -1,33 +1,43 @@
 import numpy as np
 
 # data
+# 'Machine Learning' Zhihua Zhou
+# P80   Chart 4.2
 data = np.array(
     [
-        [0,0,0,1],
-        [0,0,1,1],
-        [1,0,0,1],
-        [0,1,0,1],
-        [1,1,0,0],
-        [1,1,1,0],
-        [0,1,1,0],
-        [1,0,1,0]
+        [0,0,0,0,0,0,0],
+        [1,0,1,0,0,0,0],
+        [1,0,0,0,0,0,0],
+        [0,1,0,0,1,1,0],
+        [1,1,0,1,1,1,0],
+        [0,0,1,0,0,0,0],
+        [2,0,0,0,0,0,0],
+        [1,1,0,0,1,0,0],
+        [0,2,2,0,2,1,1],
+        [2,1,1,1,0,0,1],
+        [1,1,0,0,1,1,1],
+        [2,0,0,2,2,0,1],
+        [0,0,1,1,1,0,1],
+        [1,1,1,1,1,0,1],
+        [2,2,2,2,2,0,1],
+        [2,0,0,2,2,1,1],
+        [0,1,0,1,0,0,1]
     ]
 )
-x = data[:,:3]
-y = data[:,3]
+
+x = data[:,:-1]
+y = data[:,-1]
 
 
 
 # function
 def nodeEntropy(para_y):
-    yList = para_y.tolist()
-    classSet = set(yList)
-    classNum = len(classSet)
+    labelList = para_y.tolist()
+    LabelSet = set(labelList)
     totalNum = para_y.shape[0]
-    # return -1*sum([p*np.log(p) for p in [yList.count(c)/totalNum for c in classSet]])
-    pVector = np.array([yList.count(c)/totalNum for c in classSet])
-    return -1*np.sum([pVector*np.log(pVector)], axis=1)
-
+    pVector = np.array([labelList.count(c)/totalNum for c in LabelSet])
+    return -1*np.sum([pVector*np.log2(pVector)], axis=1)
+    
 
 def featureGain(para_data, para_rootEntropy, para_featureIndex, para_discrete=True):
     x = para_data[:,:-1]
@@ -49,8 +59,8 @@ def featureGain(para_data, para_rootEntropy, para_featureIndex, para_discrete=Tr
         for i in range(len(featureList)):
             countDict[featureList[i]].append(i)
     else:
+        # TODO handle continue feature
         pass
-
     subsetDict = dict()
     for k,v in countDict.items():
         subsetDict[k] = np.array([para_data[i] for i in v])
@@ -61,49 +71,20 @@ def featureGain(para_data, para_rootEntropy, para_featureIndex, para_discrete=Tr
     return para_rootEntropy - sumEntropy
 
 
-def selectFeatureSplit(para_x, para_y, splitFeatureList, splitFeatureDict):
+def selectFeatureSplit_ID3(para_data, splitFeatureList):
     """
-        Split with feature para_fea
-        para_fea:   the index of feature
+        Split feature with information gain
     """
-    entropy_root = nodeEntropy(para_y)
-    # label 
-    yList = para_y.tolist()
-    classSet = set(yList)
-    classNum = len(classSet)    
-    # feature
-    featureNum = para_x.shape[1]
-    for i in range(featureNum):
-        # TODO calculate gain of each feature
-        pass
+    x = para_data[:,:-1]
+    y = para_data[:,-1]
+    rootEntropy = nodeEntropy(y)
+    featureGainList = [featureGain(para_data, rootEntropy, i) for i in splitFeatureList]
+    return featureGainList.index(max(featureGainList))
 
 
-
+def trainDecsionTree(para_data, method=selectFeatureSplit_ID3):
     return None
+    pass
 
 
-# draft
-# def featureGain(para_x, para_y, para_rootEntropy, para_featureIndex, para_discrete=True)
-#     labelList = para_y.tolist()
-#     LabelSet = set(labelList)
-#     LabelNum = len(LabelSet)
-#     if para_discrete:
-#         featureList = para_x[:,para_featureIndex].tolist()
-#         featureSet = set(xList)
-#         featureNum = len(featureSet)
-#         # x=0,1,2 y=0,1
-#         # x_dict = {
-#         #   0:{0:0, 1:0}
-#         #   1:{0:0, 1:0}
-#         #   2:{0:0, 1:0}
-#         # }  
-#         # think how to generate dict with counting at the same time
-#         countDict = dict(zip(
-#                 featureSet, [
-#                     dict(zip(LabelSet, [ 0 for __ in range(LabelNum)]))
-#                     for __ in range(featureNum)
-#                 ]))
-#         for i in range(len(featureList)):
-#             countDict[featureList[i]][labelList[i]] += 1
-#     else:
-#         pass
+featureList = [i for i in range(x.shape[1])]
