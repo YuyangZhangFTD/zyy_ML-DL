@@ -147,6 +147,7 @@ def selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMet
     return compareList.index(max(compareList))
 
 
+# TODO something wrong with logic, each feature has been split twice
 def trainDecsionTree(para_data, para_splitFeatureList, para_treeDict, featureDict, compareMethod=featureGain):
     x = para_data[:,:-1]
     y = para_data[:,-1]
