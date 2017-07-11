@@ -40,6 +40,9 @@ def nodeEntropy(para_y):
     
 
 def featureGain(para_data, para_rootEntropy, para_featureIndex, para_discrete=True):
+    """
+        ID3
+    """
     x = para_data[:,:-1]
     y = para_data[:,-1]
     labelList = y.tolist()
@@ -71,28 +74,35 @@ def featureGain(para_data, para_rootEntropy, para_featureIndex, para_discrete=Tr
     return para_rootEntropy - sumEntropy
 
 
-def selectFeatureSplit_ID3(para_data, para_splitFeatureList):
+def featureGainRatio(para_data, para_rootEntropy, para_featureIndex, para_discrete=True):
     """
-        Split feature with information gain
+        C4.5
     """
-    x = para_data[:,:-1]
-    y = para_data[:,-1]
-    rootEntropy = nodeEntropy(y)
-    featureGainList = [featureGain(para_data, rootEntropy, i) for i in para_splitFeatureList]
-    return featureGainList.index(max(featureGainList))
-
-
-def stopGrowing(para_data, para_splitFeatureList, featureDict, splitDataDict):
-    """
-        1. all nodes belong to same label
-        2. split feature set is empty or the value of subset of data are same in feature A 
-        3. subset of data is empty
-    """
-    pass
     return None
 
 
-def trainDecsionTree(para_data, para_splitFeatureList, para_treeDict, featureDict, method=selectFeatureSplit_ID3):
+def featureGiniIndex(para_data, para_rootEntropy, para_featureIndex, para_discrete=True):
+    """
+        CART
+    """
+    return None
+
+
+def selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMethod=featureGain):
+    x = para_data[:,:-1]
+    y = para_data[:,-1]
+    rootEntropy = nodeEntropy(y)
+    continueVariableList = [k for k,v in featureDict.items() if len(v)==0]
+    compareList = [
+        compareMethod(para_data, rootEntropy, i) 
+        if i not in continueVariableList else
+        compareMethod(para_data, rootEntropy, i, False) 
+        for i in para_splitFeatureList
+    ]
+    return compareList.index(max(compareList))
+
+
+def trainDecsionTree(para_data, para_splitFeatureList, para_treeDict, featureDict, compareMethod=featureGain):
     x = para_data[:,:-1]
     y = para_data[:,-1]
     
@@ -101,7 +111,7 @@ def trainDecsionTree(para_data, para_splitFeatureList, para_treeDict, featureDic
         return para_treeDict
 
     # select feature to split
-    splitNode = selectFeatureSplit_ID3(para_data, para_splitFeatureList)
+    splitNode = selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMethod)
 
     # split feature and init tree dict which is used for recording
     # meanwhile, split data
@@ -126,7 +136,10 @@ def trainDecsionTree(para_data, para_splitFeatureList, para_treeDict, featureDic
 
     # recursion 
     for k,v in subsetData.items():
-        trainDecsionTree(v, copy.copy(para_splitFeatureList), para_treeDict[(splitNode, k)], featureDict, method)
+        trainDecsionTree(
+            v, copy.copy(para_splitFeatureList), 
+            para_treeDict[(splitNode, k)], featureDict, compareMethod
+        )
     return para_treeDict
 # ==================================================================================
     
@@ -146,6 +159,6 @@ featureDict = {
         }
 featureList = list(featureDict.keys())
 treeDict = {}
-trainDecsionTree(data, featureList, treeDict, featureDict, method=selectFeatureSplit_ID3)
+trainDecsionTree(data, featureList, treeDict, featureDict, compareMethod=featureGain)
 print(treeDict)
 # ==================================================================================
