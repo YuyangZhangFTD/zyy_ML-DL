@@ -25,6 +25,28 @@ data = np.array(
         [0,1,0,1,0,0,1]
     ]
 )
+# P84   Chart 4.3
+# data = np.array(
+#     [
+#         [0,0,0,0,0,0,0.697,0.460,0],
+#         [1,0,1,0,0,0,0.744,0.376,0],
+#         [1,0,0,0,0,0,0.634,0.264,0],
+#         [0,1,0,0,1,1,0.608,0.318,0],
+#         [1,1,0,1,1,1,0.556,0.215,0],
+#         [0,0,1,0,0,0,0.403,0.237,0],
+#         [2,0,0,0,0,0,0.481,0.149,0],
+#         [1,1,0,0,1,0,0.437,0.211,0],
+#         [0,2,2,0,2,1,0.666,0.091,1],
+#         [2,1,1,1,0,0,0.243.0.267,1],
+#         [1,1,0,0,1,1,0.245,0.057,1],
+#         [2,0,0,2,2,0,0.343,0,099,1],
+#         [0,0,1,1,1,0,0.639,0.161,1],
+#         [1,1,1,1,1,0,0.657,0.198,1],
+#         [2,2,2,2,2,0,0.360,0.370,1],
+#         [2,0,0,2,2,1,0.593,0.042,1],
+#         [0,1,0,1,0,0,0.719,0.103,1]
+#     ]
+# )
 x = data[:,:-1]
 y = data[:,-1]
 # ==================================================================================
@@ -32,6 +54,9 @@ y = data[:,-1]
 
 # ================================== function ====================================== 
 def nodeEntropy(para_y):
+    """
+        the entropy of a node
+    """
     labelList = para_y.tolist()
     labelSet = set(labelList)
     totalNum = para_y.shape[0]
@@ -39,34 +64,47 @@ def nodeEntropy(para_y):
     return -1*np.sum([pVector*np.log2(pVector)], axis=1)
     
 
-def featureGain(para_data, para_rootEntropy, para_featureIndex, para_discrete=True):
+def splitSubsetData(para_data, para_feature, featureDict, para_discrete=True):
     """
-        ID3
+        split data by one feature and record in a dict
+        subsetData = {
+            featureValue_1: np.array([[...],[...],...,[...]])
+            ...
+            featureValue_2: np.array([[...],[...],...,[...]])
+        }
+        for discrete variable, split with number of variable value
+        for continue variable, split with number of label value 
     """
-    x = para_data[:,:-1]
-    y = para_data[:,-1]
-    labelList = y.tolist()
-    labelSet = set(labelList)
-    labelNum = len(labelSet)
     if para_discrete:
-        featureList = x[:,para_featureIndex].tolist()
-        featureSet = set(featureList)
-        featureNum = len(featureSet)         
-        # record subset index
-        # feature {0,1} 
-        # countDic = {
-        #   0:[0,3,5]
-        #   1:[1,2,4]
-        # }
-        countDict = dict(zip(featureSet, [[] for __ in range(featureNum)]))
-        for i in range(len(featureList)):
-            countDict[featureList[i]].append(i)
+        subsetData = dict(zip(
+            featureDict[para_feature],
+            [
+                data[np.where(x[:,para_feature]==k)]
+                for k in featureDict[para_feature]
+            ]
+        ))
     else:
-        # TODO handle continue feature
-        pass
-    subsetDict = dict()
-    for k,v in countDict.items():
-        subsetDict[k] = np.array([para_data[i] for i in v])
+        labelNum = len(set(para_data[:,-1].tolist()))
+        nodeNum = int(y.shape[0]/labelNum)
+        para_data.sort(para_data[:,para_feature].argsort())
+        subsetData = dict(zip(
+            [i for i in range(labelNum)],
+            [
+                data[i*nodeNum:(i+1)*nodeNum]
+                if i != (labelNum-1)
+                else data[i*nodeNum:]
+                for i in range(labelNum)
+            ]
+
+        ))
+    return subsetData
+
+
+def featureGain(para_data, para_rootEntropy, para_feature, featureDict, para_discrete=True):
+    """
+        ID3: use gain to select feature
+    """
+    subsetDict = splitSubsetData(para_data, para_feature, featureDict, para_discrete)
     sumEntropy = sum([
         nodeEntropy(v[:,-1])*v.shape[0]/data.shape[0]
         for v in subsetDict.values()
@@ -74,29 +112,36 @@ def featureGain(para_data, para_rootEntropy, para_featureIndex, para_discrete=Tr
     return para_rootEntropy - sumEntropy
 
 
-def featureGainRatio(para_data, para_rootEntropy, para_featureIndex, para_discrete=True):
+def featureGainRatio(para_data, para_rootEntropy, para_feature, para_discrete=True):
     """
-        C4.5
+        C4.5: use gain ratio to select feature
     """
     return None
 
 
-def featureGiniIndex(para_data, para_rootEntropy, para_featureIndex, para_discrete=True):
+def featureGiniIndex(para_data, para_rootEntropy, para_feature, para_discrete=True):
     """
-        CART
+        CART: use gini index to select feature
     """
     return None
 
 
 def selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMethod=featureGain):
+    """
+        select suitable feature to split data
+        compareMethod:
+            featureGain         ==>     ID3
+            featureGainRatio    ==>     C4.5
+            featureGiniIndex    ==>     CART
+    """
     x = para_data[:,:-1]
     y = para_data[:,-1]
     rootEntropy = nodeEntropy(y)
     continueVariableList = [k for k,v in featureDict.items() if len(v)==0]
     compareList = [
-        compareMethod(para_data, rootEntropy, i) 
+        compareMethod(para_data, rootEntropy, i, featureDict) 
         if i not in continueVariableList else
-        compareMethod(para_data, rootEntropy, i, False) 
+        compareMethod(para_data, rootEntropy, i, featureDict, False) 
         for i in para_splitFeatureList
     ]
     return compareList.index(max(compareList))
@@ -155,6 +200,8 @@ featureDict = {
             2:(0,1,2),
             3:(0,1,2),
             4:(0,1,2),
+            # 6:(),
+            # 7:(),
             5:(0,1)
         }
 featureList = list(featureDict.keys())
