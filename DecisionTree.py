@@ -9,20 +9,20 @@ data = np.array(
         [0,0,0,0,0,0,0],
         [1,0,1,0,0,0,0],
         [1,0,0,0,0,0,0],
-        [0,1,0,0,1,1,0],
-        [1,1,0,1,1,1,0],
-        [0,0,1,0,0,0,0],
-        [2,0,0,0,0,0,0],
+        [0,1,0,0,0,0,0],
+        [1,1,0,1,0,0,0],
+        [0,0,1,0,1,1,0],
+        [2,0,0,0,1,1,0],
         [1,1,0,0,1,0,0],
-        [0,2,2,0,2,1,1],
-        [2,1,1,1,0,0,1],
-        [1,1,0,0,1,1,1],
-        [2,0,0,2,2,0,1],
-        [0,0,1,1,1,0,1],
-        [1,1,1,1,1,0,1],
-        [2,2,2,2,2,0,1],
+        [0,2,2,0,1,0,1],
+        [2,1,1,1,2,1,1],
+        [1,1,0,0,2,0,1],
         [2,0,0,2,2,1,1],
-        [0,1,0,1,0,0,1]
+        [0,0,1,1,0,0,1],
+        [1,1,1,1,0,0,1],
+        [2,2,2,2,1,1,1],
+        [2,0,0,2,2,0,1],
+        [0,1,0,1,1,0,1]
     ]
 )
 # P84   Chart 4.3
@@ -72,8 +72,8 @@ def splitSubsetData(para_data, para_feature, featureDict, para_discrete=True):
             ...
             featureValue_2: np.array([[...],[...],...,[...]])
         }
-        for discrete variable, split with number of variable value
-        for continue variable, split with number of label value 
+        for discrete feature, split with number of feature value
+        for continuous feature, split with number of label value or just split into 2
     """
     if para_discrete:
         subsetData = dict(zip(
@@ -84,7 +84,8 @@ def splitSubsetData(para_data, para_feature, featureDict, para_discrete=True):
             ]
         ))
     else:
-        labelNum = len(set(para_data[:,-1].tolist()))
+        # labelNum = len(set(para_data[:,-1].tolist()))
+        labelNum = 2    # binary split
         nodeNum = int(y.shape[0]/labelNum)
         para_data.sort(para_data[:,para_feature].argsort())
         subsetData = dict(zip(
@@ -137,10 +138,10 @@ def selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMet
     x = para_data[:,:-1]
     y = para_data[:,-1]
     rootEntropy = nodeEntropy(y)
-    continueVariableList = [k for k,v in featureDict.items() if len(v)==0]
+    continuousVariableList = [k for k,v in featureDict.items() if len(v)==0]
     compareList = [
         compareMethod(para_data, rootEntropy, i, featureDict) 
-        if i not in continueVariableList else
+        if i not in continuousVariableList else
         compareMethod(para_data, rootEntropy, i, featureDict, False) 
         for i in para_splitFeatureList
     ]
@@ -156,32 +157,37 @@ def trainDecsionTree(para_data, para_splitFeatureList, para_treeDict, featureDic
     if len(y)==0 or len(para_splitFeatureList)==0 or y[0]==np.mean(y):
         return para_treeDict
 
-    # select feature to split
-    splitNode = selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMethod)
-
-    # split feature and init tree dict which is used for recording
-    # meanwhile, split data
-    subsetData = {}
-    # if variable is discrete, split number decided by number of feature values
+    # select feature to split: get faeture value insted of faeture index, so use remove to del discrete feature
+    splitNode = para_splitFeatureList[selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMethod)]
+    
+    # split number: judge discrete feature or continuous faeture
     splitNum = len(featureDict[splitNode])
+    
+    # split feature
+    subsetData = splitSubsetData(para_data, splitNode, featureDict, para_discrete=(splitNum != 0))
+    # init tree dict which is used for recording tree structure
     if splitNum != 0:
         # del it from splitFeatureList
-        para_splitFeatureList.pop(splitNode)
-        # feature a = {0,1,2}, split into 3 pieces
-        for k in featureDict[splitNode]:
-            para_treeDict[(splitNode, k)] = {}
-            # numpy is too powerful!!! OTZ
-            subsetData[k] = para_data[np.where(x[:,splitNode]==k)]
+        para_splitFeatureList.remove(splitNode)
+        # if variable is discrete, split number decided by number of feature values
+        splitFeatureValueSet = featureDict.get(splitNode)
     else:
-        # split number decided by values of label
-        # 2-class classification, split into 2 pieces
-        splitNum = len(set(y.tolist()))
-        # TODO how to record in tree dict
-        # do with para_treeDict and subsetData
-        print("Unlucky to be here !")
+        # split number decided by values of label or 2        
+        # 0 for samples which is less than middle value
+        # 1 for samples which is bigger than middle value
+        splitFeatureValueSet = (0,1)
 
+    for k in splitFeatureValueSet:
+        para_treeDict[(splitNode, k)] = {}
+        
+    print("Split Node at:  "+str(splitNode))
+    print("Feature List: ")
+    print(para_splitFeatureList)
     # recursion 
     for k,v in subsetData.items():
+        print("Init Node from "+str(splitNode)+" to "+str(k))
+        print("Subset Data: ")
+        print(v)
         trainDecsionTree(
             v, copy.copy(para_splitFeatureList), 
             para_treeDict[(splitNode, k)], featureDict, compareMethod
@@ -194,7 +200,7 @@ def trainDecsionTree(para_data, para_splitFeatureList, para_treeDict, featureDic
 # feature dict
 # key:      feature name
 # value:    feature value
-# () for continue variable
+# () for continuous feature
 featureDict = {
             0:(0,1,2),
             1:(0,1,2),
@@ -210,4 +216,71 @@ treeDict = {}
 trainDecsionTree(data, featureList, treeDict, featureDict, compareMethod=featureGain)
 print(treeDict)
 # ==================================================================================
-
+# {
+#     (3, 0): {
+#         (4, 2): {}, 
+#         (4, 1): {
+#             (1, 2): {}, 
+#             (1, 0): {}, 
+#             (1, 1): {
+#                 (2, 0): {
+#                     (0, 1): {
+#                         (5, 1): {}, 
+#                         (5, 0): {}
+#                         }, 
+#                     (0, 0): {}, 
+#                     (0, 2): {}
+#                     }, 
+#                 (2, 1): {}, 
+#                 (2, 2): {}
+#                 }
+#             }, 
+#         (4, 0): {}
+#         }, 
+#     (3, 2): {}, 
+#     (3, 1): {
+#         (4, 2): {}, 
+#         (4, 1): {
+#             (1, 2): {}, 
+#             (1, 0): {}, 
+#             (1, 1): {
+#                 (2, 0): {}, 
+#                 (2, 1): {}, 
+#                 (2, 2): {}
+#                 }
+#             }, 
+#         (4, 0): {}
+#         }
+#     }
+{
+    (3, 0): {
+        (4, 2): {}, 
+        (4, 1): {
+            (1, 2): {}, 
+            (1, 0): {
+                (2, 0): {
+                    (0, 1): {
+                        (5, 1): {}, 
+                        (5, 0): {}
+                        }, 
+                    (0, 0): {
+                        (5, 1): {}, 
+                        (5, 0): {}
+                        }, 
+                    (0, 2): {
+                        (5, 1): {}, 
+                        (5, 0): {}
+                        }
+                    }, 
+                (2, 1): {
+                    (0,1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {}}, (1, 1): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5,
+1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {
+}}}, (4, 0): {(1, 2): {}, (1, 0): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0, 1): {(5, 1): {},
+(5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {}}, (1, 1): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {
+}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {}}}}, (3, 2): {},
+ (3, 1): {(4, 2): {}, (4, 1): {(1, 2): {}, (1, 0): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0,
+1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {}}, (1, 1): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5,
+1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {
+}}}, (4, 0): {(1, 2): {}, (1, 0): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0, 1): {(5, 1): {},
+(5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {}}, (1, 1): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {
+}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {}}}}}
