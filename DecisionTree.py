@@ -1,6 +1,8 @@
 import numpy as np
 import copy
 
+# TODO handle continous feature 2017-07-13 15:52
+
 # ================================== init data =====================================
 # 'Machine Learning' Zhihua Zhou
 # P80   Chart 4.2
@@ -56,9 +58,8 @@ y = data[:,-1]
 def nodeEntropy(para_y):
     """
         the entropy of a node
-    """
-    labelList = para_y.tolist()
-    labelSet = set(labelList)
+    """    
+    labelSet = np.unique(para_y)
     totalNum = para_y.shape[0]
     pVector = np.array([labelList.count(c)/totalNum for c in labelSet])
     return -1*np.sum([pVector*np.log2(pVector)], axis=1)
@@ -84,7 +85,7 @@ def splitSubsetData(para_data, para_feature, featureDict, para_discrete=True):
             ]
         ))
     else:
-        # labelNum = len(set(para_data[:,-1].tolist()))
+        # labelNum = np.unique(para_y).shape[0]
         labelNum = 2    # binary split
         nodeNum = int(y.shape[0]/labelNum)
         para_data = para_data[np.argsort(para_data[:,para_feature])]
@@ -181,7 +182,7 @@ def train(para_data, para_splitFeatureList, para_treeDict, featureDict, compareM
     if len(y)==0 or len(para_splitFeatureList)==0 or y[0]==np.mean(y):      
         if len(y) != 0:
             if len(para_splitFeatureList) == 0:
-                labelSet = set(y.tolist)
+                labelSet = np.unique(para_y)
                 para_treeDict['label'] = labelSet.index(
                     max([
                         y[np.where(y==label)].shape[0]
