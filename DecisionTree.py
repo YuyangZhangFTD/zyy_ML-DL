@@ -4,49 +4,49 @@ import copy
 # ================================== init data =====================================
 # 'Machine Learning' Zhihua Zhou
 # P80   Chart 4.2
-data = np.array(
-    [
-        [0,0,0,0,0,0,0],
-        [1,0,1,0,0,0,0],
-        [1,0,0,0,0,0,0],
-        [0,1,0,0,0,0,0],
-        [1,1,0,1,0,0,0],
-        [0,0,1,0,1,1,0],
-        [2,0,0,0,1,1,0],
-        [1,1,0,0,1,0,0],
-        [0,2,2,0,1,0,1],
-        [2,1,1,1,2,1,1],
-        [1,1,0,0,2,0,1],
-        [2,0,0,2,2,1,1],
-        [0,0,1,1,0,0,1],
-        [1,1,1,1,0,0,1],
-        [2,2,2,2,1,1,1],
-        [2,0,0,2,2,0,1],
-        [0,1,0,1,1,0,1]
-    ]
-)
-# P84   Chart 4.3
 # data = np.array(
 #     [
-#         [0,0,0,0,0,0,0.697,0.460,0],
-#         [1,0,1,0,0,0,0.744,0.376,0],
-#         [1,0,0,0,0,0,0.634,0.264,0],
-#         [0,1,0,0,1,1,0.608,0.318,0],
-#         [1,1,0,1,1,1,0.556,0.215,0],
-#         [0,0,1,0,0,0,0.403,0.237,0],
-#         [2,0,0,0,0,0,0.481,0.149,0],
-#         [1,1,0,0,1,0,0.437,0.211,0],
-#         [0,2,2,0,2,1,0.666,0.091,1],
-#         [2,1,1,1,0,0,0.243.0.267,1],
-#         [1,1,0,0,1,1,0.245,0.057,1],
-#         [2,0,0,2,2,0,0.343,0,099,1],
-#         [0,0,1,1,1,0,0.639,0.161,1],
-#         [1,1,1,1,1,0,0.657,0.198,1],
-#         [2,2,2,2,2,0,0.360,0.370,1],
-#         [2,0,0,2,2,1,0.593,0.042,1],
-#         [0,1,0,1,0,0,0.719,0.103,1]
+#         [0,0,0,0,0,0,0],
+#         [1,0,1,0,0,0,0],
+#         [1,0,0,0,0,0,0],
+#         [0,1,0,0,1,1,0],
+#         [1,1,0,1,1,1,0],
+#         [0,0,1,0,0,0,0],
+#         [2,0,0,0,0,0,0],
+#         [1,1,0,0,1,0,0],
+#         [0,2,2,0,2,1,1],
+#         [2,1,1,1,0,0,1],
+#         [1,1,0,0,1,1,1],
+#         [2,0,0,2,2,0,1],
+#         [0,0,1,1,1,0,1],
+#         [1,1,1,1,1,0,1],
+#         [2,2,2,2,2,0,1],
+#         [2,0,0,2,2,1,1],
+#         [0,1,0,1,0,0,1]
 #     ]
 # )
+# P84   Chart 4.3
+data = np.array(
+    [
+        [0,0,0,0,0,0,0.697,0.460,0],
+        [1,0,1,0,0,0,0.744,0.376,0],
+        [1,0,0,0,0,0,0.634,0.264,0],
+        [0,1,0,0,1,1,0.608,0.318,0],
+        [1,1,0,1,1,1,0.556,0.215,0],
+        [0,0,1,0,0,0,0.403,0.237,0],
+        [2,0,0,0,0,0,0.481,0.149,0],
+        [1,1,0,0,1,0,0.437,0.211,0],
+        [0,2,2,0,2,1,0.666,0.091,1],
+        [2,1,1,1,0,0,0.243,0.267,1],
+        [1,1,0,0,1,1,0.245,0.057,1],
+        [2,0,0,2,2,0,0.343,0.099,1],
+        [0,0,1,1,1,0,0.639,0.161,1],
+        [1,1,1,1,1,0,0.657,0.198,1],
+        [2,2,2,2,2,0,0.360,0.370,1],
+        [2,0,0,2,2,1,0.593,0.042,1],
+        [0,1,0,1,0,0,0.719,0.103,1]
+    ]
+)
 x = data[:,:-1]
 y = data[:,-1]
 # ==================================================================================
@@ -87,7 +87,7 @@ def splitSubsetData(para_data, para_feature, featureDict, para_discrete=True):
         # labelNum = len(set(para_data[:,-1].tolist()))
         labelNum = 2    # binary split
         nodeNum = int(y.shape[0]/labelNum)
-        para_data.sort(para_data[:,para_feature].argsort())
+        para_data = para_data[np.argsort(para_data[:,para_feature])]
         subsetData = dict(zip(
             [i for i in range(labelNum)],
             [
@@ -96,7 +96,6 @@ def splitSubsetData(para_data, para_feature, featureDict, para_discrete=True):
                 else para_data[i*nodeNum:]
                 for i in range(labelNum)
             ]
-
         ))
     return subsetData
 
@@ -117,6 +116,11 @@ def featureGain(para_data, para_rootEntropy, para_feature, featureDict, para_dis
 def featureGainRatio(para_data, para_rootEntropy, para_feature, featureDict, para_discrete=True):
     """
         C4.5: use gain ratio to select feature
+        Attention:
+            C4.5 prefer to the feature with less class.Generally 
+        speaking, we choose the feature with max gain ratio in 
+        those features of which gain is above the mean. But, we 
+        don't do that here.
     """
     subsetDict = splitSubsetData(para_data, para_feature, featureDict, para_discrete)
     # just copy from featureGain()
@@ -169,14 +173,24 @@ def selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMet
     return compareList.index(max(compareList))
 
 
-def trainDecsionTree(para_data, para_splitFeatureList, para_treeDict, featureDict, compareMethod=featureGain):
+def train(para_data, para_splitFeatureList, para_treeDict, featureDict, compareMethod=featureGain):
     x = para_data[:,:-1]
     y = para_data[:,-1]
     
     # stop growing
-    if len(y)==0 or len(para_splitFeatureList)==0 or y[0]==np.mean(y):
+    if len(y)==0 or len(para_splitFeatureList)==0 or y[0]==np.mean(y):      
+        if len(y) != 0:
+            if len(para_splitFeatureList) == 0:
+                labelSet = set(y.tolist)
+                para_treeDict['label'] = labelSet.index(
+                    max([
+                        y[np.where(y==label)].shape[0]
+                        for label in labelSet])
+                    )
+            else:
+                para_treeDict['label'] = y[0]
+        print(para_treeDict)
         return para_treeDict
- 
     # select feature to split: get faeture value instead of faeture index, so use remove to del discrete feature
     splitNode = para_splitFeatureList[selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMethod)]
     
@@ -204,11 +218,30 @@ def trainDecsionTree(para_data, para_splitFeatureList, para_treeDict, featureDic
     # recursion 
     for k,v in subsetData.items():
         print("Init Node from "+str(splitNode)+" at value: "+str(k))
-        trainDecsionTree(
+        train(
             v, copy.copy(para_splitFeatureList), 
             para_treeDict[(splitNode, k)], featureDict, compareMethod
         )
     return para_treeDict
+
+
+def predictOne(para_data, treeDict, compareMethod=featureGain):
+    for k,v in treeDict.items():
+        if type(k) == tuple:
+            if para_data[k[0]] == k[1]:
+                return predictOne(para_data, v, compareMethod)
+        else:
+            return treeDict['label']
+
+
+def predict(para_data, treeDict, compareMethod=featureGain):
+    x = para_data[:,:-1]
+    return np.array([
+        predictOne(x[i,:], treeDict, compareMethod)
+        for i in range(x.shape[0])
+    ])
+    
+    
 # ==================================================================================
     
 
@@ -223,12 +256,50 @@ featureDict = {
             2:(0,1,2),
             3:(0,1,2),
             4:(0,1,2),
-            # 6:(),
-            # 7:(),
+            6:(),
+            7:(),
             5:(0,1)
         }
 featureList = list(featureDict.keys())
 treeDict = {}
-trainDecsionTree(data, featureList, treeDict, featureDict, compareMethod=featureGiniIndex)
+train(data, featureList, treeDict, featureDict, compareMethod=featureGainRatio)
 print(treeDict)
+y_hat = predict(data, treeDict, compareMethod=featureGiniIndex)
+y = data[:,-1]
+print(y_hat)
 # ==================================================================================
+{
+    (3, 0): {
+        (1, 2): {'label': 1.0}, 
+        (1, 0): {'label': 0.0}, 
+        (1, 1): {
+            (0, 1): {
+                (5, 1): {'label': 1.0}, 
+                (5, 0): {'label': 0.0}
+                }, 
+            (0, 0): {'label': 0.0}, 
+            (0, 2): {}
+            }
+        }, 
+    (3, 2): {'label': 1.0}, 
+    (3, 1): {
+        (5, 1): {'label': 0.0}, 
+        (5, 0): {'label': 1.0}
+        }
+    }
+{
+    (7, 0): {
+        (4, 2): {'label': 1.0}, 
+        (4, 1): {'label': 1.0}, 
+        (4, 0): {
+            (0, 1): {}, 
+            (0, 0): {'label': 1.0}, 
+            (0, 2): {'label': 0.0}
+            }
+        }, 
+    (7, 1): {
+        (0, 1): {'label': 0.0}, 
+        (0, 0): {'label': 0.0}, 
+        (0, 2): {'label': 1.0}
+        }
+    }
