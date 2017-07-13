@@ -79,7 +79,7 @@ def splitSubsetData(para_data, para_feature, featureDict, para_discrete=True):
         subsetData = dict(zip(
             featureDict[para_feature],
             [
-                data[np.where(x[:,para_feature]==k)]
+                para_data[np.where(para_data[:,para_feature]==k)]
                 for k in featureDict[para_feature]
             ]
         ))
@@ -91,9 +91,9 @@ def splitSubsetData(para_data, para_feature, featureDict, para_discrete=True):
         subsetData = dict(zip(
             [i for i in range(labelNum)],
             [
-                data[i*nodeNum:(i+1)*nodeNum]
+                para_data[i*nodeNum:(i+1)*nodeNum]
                 if i != (labelNum-1)
-                else data[i*nodeNum:]
+                else para_data[i*nodeNum:]
                 for i in range(labelNum)
             ]
 
@@ -156,8 +156,8 @@ def trainDecsionTree(para_data, para_splitFeatureList, para_treeDict, featureDic
     # stop growing
     if len(y)==0 or len(para_splitFeatureList)==0 or y[0]==np.mean(y):
         return para_treeDict
-
-    # select feature to split: get faeture value insted of faeture index, so use remove to del discrete feature
+ 
+    # select feature to split: get faeture value instead of faeture index, so use remove to del discrete feature
     splitNode = para_splitFeatureList[selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMethod)]
     
     # split number: judge discrete feature or continuous faeture
@@ -185,9 +185,7 @@ def trainDecsionTree(para_data, para_splitFeatureList, para_treeDict, featureDic
     print(para_splitFeatureList)
     # recursion 
     for k,v in subsetData.items():
-        print("Init Node from "+str(splitNode)+" to "+str(k))
-        print("Subset Data: ")
-        print(v)
+        print("Init Node from "+str(splitNode)+" at value: "+str(k))
         trainDecsionTree(
             v, copy.copy(para_splitFeatureList), 
             para_treeDict[(splitNode, k)], featureDict, compareMethod
@@ -218,69 +216,22 @@ print(treeDict)
 # ==================================================================================
 # {
 #     (3, 0): {
-#         (4, 2): {}, 
-#         (4, 1): {
-#             (1, 2): {}, 
-#             (1, 0): {}, 
-#             (1, 1): {
-#                 (2, 0): {
-#                     (0, 1): {
-#                         (5, 1): {}, 
-#                         (5, 0): {}
-#                         }, 
-#                     (0, 0): {}, 
-#                     (0, 2): {}
-#                     }, 
-#                 (2, 1): {}, 
-#                 (2, 2): {}
-#                 }
-#             }, 
-#         (4, 0): {}
+#         (1, 2): {},       3
+#         (1, 0): {},       0
+#         (1, 1): {
+#             (4, 2): {},   3
+#             (4, 1): {},   3
+#             (4, 0): {}    3
+#             }
 #         }, 
-#     (3, 2): {}, 
+#     (3, 2): {},           3
 #     (3, 1): {
-#         (4, 2): {}, 
-#         (4, 1): {
-#             (1, 2): {}, 
-#             (1, 0): {}, 
-#             (1, 1): {
-#                 (2, 0): {}, 
-#                 (2, 1): {}, 
-#                 (2, 2): {}
-#                 }
+#         (0, 1): {
+#             (2, 0): {},   3
+#             (2, 1): {},   3
+#             (2, 2): {}    1
 #             }, 
-#         (4, 0): {}
+#         (0, 0): {},       3
+#         (0, 2): {}        3
 #         }
 #     }
-{
-    (3, 0): {
-        (4, 2): {}, 
-        (4, 1): {
-            (1, 2): {}, 
-            (1, 0): {
-                (2, 0): {
-                    (0, 1): {
-                        (5, 1): {}, 
-                        (5, 0): {}
-                        }, 
-                    (0, 0): {
-                        (5, 1): {}, 
-                        (5, 0): {}
-                        }, 
-                    (0, 2): {
-                        (5, 1): {}, 
-                        (5, 0): {}
-                        }
-                    }, 
-                (2, 1): {
-                    (0,1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {}}, (1, 1): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5,
-1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {
-}}}, (4, 0): {(1, 2): {}, (1, 0): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0, 1): {(5, 1): {},
-(5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {}}, (1, 1): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {
-}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {}}}}, (3, 2): {},
- (3, 1): {(4, 2): {}, (4, 1): {(1, 2): {}, (1, 0): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0,
-1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {}}, (1, 1): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5,
-1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {
-}}}, (4, 0): {(1, 2): {}, (1, 0): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0, 1): {(5, 1): {},
-(5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {}}, (1, 1): {(2, 0): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {
-}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 1): {(0, 1): {(5, 1): {}, (5, 0): {}}, (0, 0): {(5, 1): {}, (5, 0): {}}, (0, 2): {(5, 1): {}, (5, 0): {}}}, (2, 2): {}}}}}
