@@ -106,8 +106,9 @@ def featureGain(para_data, para_rootEntropy, para_feature, featureDict, para_dis
         ID3: use gain to select feature
     """
     subsetDict = splitSubsetData(para_data, para_feature, featureDict, para_discrete)
+    totalDataNum = sum([v.shape[0] for v in subsetDict.values()])
     sumEntropy = sum([
-        nodeEntropy(v[:,-1])*v.shape[0]/data.shape[0]
+        nodeEntropy(v[:,-1])*v.shape[0]/totalDataNum
         for v in subsetDict.values()
     ])
     return para_rootEntropy - sumEntropy
@@ -119,8 +120,9 @@ def featureGainRatio(para_data, para_rootEntropy, para_feature, featureDict, par
     """
     subsetDict = splitSubsetData(para_data, para_feature, featureDict, para_discrete)
     # just copy from featureGain()
+    totalDataNum = sum([v.shape[0] for v in subsetDict.values()])
     gain = para_rootEntropy - sum([
-        nodeEntropy(v[:,-1])*v.shape[0]/data.shape[0]
+        nodeEntropy(v[:,-1])*v.shape[0]/totalDataNum
         for v in subsetDict.values()
     ])
     valueNum = [v.shape[0] for v in subsetDict.values()]
@@ -135,11 +137,18 @@ def featureGainRatio(para_data, para_rootEntropy, para_feature, featureDict, par
 def featureGiniIndex(para_data, para_rootEntropy, para_feature, para_discrete=True):
     """
         CART: use gini index to select feature
+        para_rootEntropy is not used
     """
-    return None
+    subsetDict = splitSubsetData(para_data, para_feature, featureDict, para_discrete)
+    totalDataNum = sum([v.shape[0] for v in subsetDict.values()])
+    pVector = [
+        v[:,-1].shape[0]/totalDataNum
+        for v in subsetDict.values()
+    ]
+    return 1-sum([p**2 for p in pVector])
 
 
-def selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMethod=featureGainRatio):
+def selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMethod=featureGain):
     """
         select suitable feature to split data
         compareMethod:
@@ -160,7 +169,6 @@ def selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMet
     return compareList.index(max(compareList))
 
 
-# TODO something wrong with logic, each feature has been split twice
 def trainDecsionTree(para_data, para_splitFeatureList, para_treeDict, featureDict, compareMethod=featureGain):
     x = para_data[:,:-1]
     y = para_data[:,-1]
@@ -221,6 +229,6 @@ featureDict = {
         }
 featureList = list(featureDict.keys())
 treeDict = {}
-trainDecsionTree(data, featureList, treeDict, featureDict, compareMethod=featureGain)
+trainDecsionTree(data, featureList, treeDict, featureDict, compareMethod=featureGiniIndex)
 print(treeDict)
 # ==================================================================================
