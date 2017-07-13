@@ -113,11 +113,23 @@ def featureGain(para_data, para_rootEntropy, para_feature, featureDict, para_dis
     return para_rootEntropy - sumEntropy
 
 
-def featureGainRatio(para_data, para_rootEntropy, para_feature, para_discrete=True):
+def featureGainRatio(para_data, para_rootEntropy, para_feature, featureDict, para_discrete=True):
     """
         C4.5: use gain ratio to select feature
     """
-    return None
+    subsetDict = splitSubsetData(para_data, para_feature, featureDict, para_discrete)
+    # just copy from featureGain()
+    gain = para_rootEntropy - sum([
+        nodeEntropy(v[:,-1])*v.shape[0]/data.shape[0]
+        for v in subsetDict.values()
+    ])
+    valueNum = [v.shape[0] for v in subsetDict.values()]
+    valueNumSum = sum(valueNum)
+    intrinsicValue = -1 * sum([
+        num/valueNumSum * np.log2(num/valueNumSum)
+        for num in valueNum
+    ])
+    return gain/intrinsicValue
 
 
 def featureGiniIndex(para_data, para_rootEntropy, para_feature, para_discrete=True):
@@ -127,7 +139,7 @@ def featureGiniIndex(para_data, para_rootEntropy, para_feature, para_discrete=Tr
     return None
 
 
-def selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMethod=featureGain):
+def selectFeatureSplit(para_data, para_splitFeatureList, featureDict, compareMethod=featureGainRatio):
     """
         select suitable feature to split data
         compareMethod:
@@ -181,8 +193,6 @@ def trainDecsionTree(para_data, para_splitFeatureList, para_treeDict, featureDic
         para_treeDict[(splitNode, k)] = {}
         
     print("Split Node at:  "+str(splitNode))
-    print("Feature List: ")
-    print(para_splitFeatureList)
     # recursion 
     for k,v in subsetData.items():
         print("Init Node from "+str(splitNode)+" at value: "+str(k))
@@ -214,24 +224,3 @@ treeDict = {}
 trainDecsionTree(data, featureList, treeDict, featureDict, compareMethod=featureGain)
 print(treeDict)
 # ==================================================================================
-# {
-#     (3, 0): {
-#         (1, 2): {},       3
-#         (1, 0): {},       0
-#         (1, 1): {
-#             (4, 2): {},   3
-#             (4, 1): {},   3
-#             (4, 0): {}    3
-#             }
-#         }, 
-#     (3, 2): {},           3
-#     (3, 1): {
-#         (0, 1): {
-#             (2, 0): {},   3
-#             (2, 1): {},   3
-#             (2, 2): {}    1
-#             }, 
-#         (0, 0): {},       3
-#         (0, 2): {}        3
-#         }
-#     }
